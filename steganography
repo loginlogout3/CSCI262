@@ -1,0 +1,86 @@
+/
+// Created by landonaune on 2/8/22.
+//
+
+#include <iostream>
+#include "steganography.h"
+#include "utility.h"
+
+using namespace std;
+
+bool steganography::execute(picture &p, const string &command) {
+    if (command == "conceal") _conceal(p);
+}
+int ifOdd(int x){
+    if(x%2 != 0){
+        return x;
+    }
+    else{
+        return x+1;
+    }
+}
+int ifEven(int x){
+    if(x%2==0){
+        return x;
+    }
+    else{
+        return x+1;
+    }
+}
+bool steganography::_conceal(picture &p) {
+    string prompt = "Enter the text to conceal.  You can enter multiple lines; enter a blank line\nto stop";
+    string message = utility::get_lines(prompt);
+    if((p.width()*p.height())/3<message.length()+5){
+        return false;
+    }
+    message = "STEGO" + message;
+    message = message + "\0";
+    int c = 0, l=0;
+    float r,g,b;
+    vector<u_char> w;
+    vector<int> v;
+    for(int i = 0;i<message.length();i++) {
+        w.push_back(message[i]);
+        while (w.at(i) > 0) {
+            l = l + ((int )w.at(i) % 2) * (c*10);
+            c++;
+            w.at(i) = (int ) w.at(i) / 2;
+        }
+        v.push_back(l);
+        c = 0;
+        l=0;
+        cout << to_string(v.at(l)) +" ";
+    }
+    int s = 0;
+    for(int y = 0; y<p.height();y++){
+        for(int x = 0; x < p.width();x++) {
+            r = p.red(x,y);
+            g = p.green(x,y);
+            b = p.blue(x,y);
+            if(v.at(s)%2==0){
+                r = ifEven(r);
+            }else{
+                r = ifOdd(r);
+            }
+            v.at(s) = v.at(s)/10;
+            if(v.at(s)%2==0){
+                g = ifEven(g);
+            }else{
+                g = ifOdd(g);
+            }
+            v.at(s)=v.at(s)/10;
+            if(v.at(s) == 0){
+                s++;
+            }
+            else if(v.at(s)%2==0) {
+                b = ifEven(b);
+            }else{
+                b = ifOdd(b);
+            }
+            p.set(x,y,r,g,b);
+            if(s==message.length()){
+                return true;
+            }
+        }
+    }
+}
